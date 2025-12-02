@@ -4,8 +4,8 @@
 
 
 int main() {
-    auto potts2d = QPottsModel(2, 2, 5, 1.0);
-    auto wl_simulator = WangLandauSimulator<QPottsModel>(potts2d);
+    auto potts = QPottsModel(2, 3, 3, 1.0);
+    auto wl_simulator = WangLandauSimulator<QPottsModel>(potts);
     wl_simulator.runSimulation(1'000'000, 1e-8, 0.8);
     std::cout << "Histogram is flat? --- " << wl_simulator.isHistogramFlat(0.8);
 

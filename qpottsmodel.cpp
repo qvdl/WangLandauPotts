@@ -44,15 +44,15 @@ void QPottsModel::setSpin(const std::vector<size_t> &coordinates, const int new_
 
 double QPottsModel::computeEnergy() const {
     double energy=0.0;
-    for (int i=0; i<spins.size(); ++i) {
-        const std::vector<size_t> coordinates = getCoordinates(i);
+    for (int idx=0; idx<getTotalSites(); ++idx) {
+        const std::vector<size_t> coordinates = getCoordinates(idx);
 
         for (int d=0; d<dim; ++d) {
-            std::vector<size_t> neighbor_coordinates = coordinates;       // get current coordinates
-            neighbor_coordinates[d] = (coordinates[d]+1) % L;                // step in one direction
+            std::vector<size_t> neighbor_coordinates = coordinates;
+            neighbor_coordinates[d] = (coordinates[d]+1) % L;
 
-            const size_t j = getIndex(neighbor_coordinates);
-            if (spins[i] == spins[j]) { energy -= J; }
+            const size_t nb_idx = getIndex(neighbor_coordinates);
+            if (spins[idx] == spins[nb_idx]) { energy -= J; }
         }
     }
 
@@ -65,7 +65,7 @@ double QPottsModel::computeEnergyDifference(const size_t idx, const int new_spin
 }
 
 double QPottsModel::computeEnergyDifference(const std::vector<size_t> &coordinates, const int new_spin) const {
-    if (new_spin >= Q) { throw std::invalid_argument("Proposal not possible: new spin should be smaller than Q=" + std::to_string(Q)); }
+    if (new_spin >= Q) { throw std::invalid_argument("Spin proposal not possible: new spin should be smaller than Q=" + std::to_string(Q)); }
 
     double delta=0.0;
     const size_t idx = getIndex(coordinates);
@@ -74,14 +74,17 @@ double QPottsModel::computeEnergyDifference(const std::vector<size_t> &coordinat
     if (old_spin == new_spin) { return delta; }
 
     for (int d=0; d<dim; ++d) {
+        // check energy difference in positive direction
         std::vector<size_t> pos_neighbor_coords = coordinates;
         pos_neighbor_coords[d] = (coordinates[d] + 1) % L;
 
         const size_t pos_neighbor_idx = getIndex(pos_neighbor_coords);
         const int pos_neighbor_spin = spins[pos_neighbor_idx];
+
         if (old_spin == pos_neighbor_spin) { delta += J; }
         if (new_spin == pos_neighbor_spin) { delta -= J; }
 
+        // check energy difference in negative direction
         std::vector<size_t> neg_neighbor_coords = coordinates;
         neg_neighbor_coords[d] = (coordinates[d] + L - 1) % L;
 

@@ -43,18 +43,30 @@ public:
     void resetHistogram() { std::ranges::fill(histogram, 0); }
 
     [[nodiscard]] bool isHistogramFlat(const double criterion) const {
-        std::vector<size_t> reachable_counts;
-        for (const auto& count : histogram) {
-            if (count > 0) {
-                reachable_counts.emplace_back(count);
+        int visited_count = 0;
+        int total_hist = 0;
+
+        for (int E = min_energy; E <= max_energy; E++) {
+            if (histogram[E] > 0) {
+                visited_count++;
+                total_hist += histogram[E];
             }
         }
 
-        if (reachable_counts.empty()) { return false; }
+        // if no energies visited, histogram is not flat
+        if (visited_count == 0) { return false; }
 
-        const double mean = std::accumulate(reachable_counts.begin(), reachable_counts.end(), 0.0) / static_cast<double>(reachable_counts.size());
-        const double min = *std::ranges::min_element(reachable_counts.begin(), reachable_counts.end());
-        return (min > mean*criterion);
+        // compute average
+        double avg_hist = static_cast<double>(total_hist) / static_cast<double>(visited_count);
+
+        // check if all visited energies meet criterion
+        for (int E=min_energy; E<=max_energy; ++E) {
+            if (histogram[E] > 0) {
+                if (histogram[E] < criterion * avg_hist) { return false; }
+            }
+        }
+
+        return true;
     }
 
     void plotHistogram(const std::string& filename) const {
@@ -77,11 +89,11 @@ public:
         file.close();
     }
 
-    [[nodiscard]] int energy_to_index(double energy) const {
+    [[nodiscard]] int energy_to_index(const double energy) const {
         const int idx = static_cast<int>(std::round(energy) - min_energy);
 
         if (idx < 0 || idx >= histogram.size()) {
-            // DEBUG: print wat er misgaat
+            // DEBUG
             std::cerr << "ENERGY BUG: energy=" << energy
                       << " min=" << min_energy << " max=" << max_energy
                       << " idx=" << idx << " hist_size=" << histogram.size() << std::endl;
