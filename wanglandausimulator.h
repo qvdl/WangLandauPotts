@@ -49,18 +49,18 @@ public:
         for (auto& count : histogram) {
             if (count > 0) {
                 visited_count++;
-                total_hist += count;
+                total_hist += static_cast<int>(count);
             }
         }
 
         // if we have not visited enough energies yet, histogram is not flat
-        if (static_cast<double>(visited_count) / static_cast<double>(histogram.size())) { return false; }
+        if (static_cast<double>(visited_count) / static_cast<double>(histogram.size()) < 0.25) { return false; }
 
         // compute average
         const double avg_hist = static_cast<double>(total_hist) / static_cast<double>(visited_count);
 
         // check flatness for visited energies
-        for (int E=0; E<total_hist; ++E) {
+        for (size_t E=0; E<histogram.size(); ++E) {
             if (histogram[E] > 0 && histogram[E] < criterion * avg_hist) { return false; }
         }
 
@@ -77,12 +77,12 @@ public:
         file.close();
     }
 
-    void plotDensities(const std::string& filename) const {
+    void plotLogDensities(const std::string& filename) const {
         std::ofstream file(filename);
         file << "energy,density\n";
         for (int e=min_energy; e<=max_energy; ++e) {
             int idx = e - min_energy;
-            file << e << "," << std::exp(log_densities[idx]) << "\n";
+            file << e << "," << log_densities[idx] << "\n";
         }
         file.close();
     }
@@ -91,69 +91,65 @@ public:
         const int idx = static_cast<int>(std::round(energy) - min_energy);
 
         if (idx < 0 || idx >= histogram.size()) {
-            // DEBUG
-            std::cerr << "ENERGY BUG: energy=" << energy
-                      << " min=" << min_energy << " max=" << max_energy
-                      << " idx=" << idx << " hist_size=" << histogram.size() << std::endl;
-            throw std::out_of_range("Energy index out of bounds");
+            throw std::out_of_range("Energy index out of bounds!");
         }
+
         return idx;
     }
 
     // ALGORITHM IMPLEMENTATION
-    void runSimulation(const size_t mc_sweeps, const double tolerance, const double flatness_criterion) {
+    void runSimulation(const double tolerance, const double flatness_criterion) {
         double current_energy = lattice.computeEnergy();
         int counter=0;
         int check_interval = 10'000;
 
-        try {
-            if (energy_to_index(current_energy) < 0) {
-                throw std::out_of_range("Initial energy is outside the defined range.");
-            }
-        } catch (const std::out_of_range& e) {
-            std::cerr << "Simulation aborted: " << e.what() << std::endl;
+        int current_energy_bin = energy_to_index(current_energy);
+        if (current_energy_bin < 0 || current_energy_bin >= log_densities.size()) {
+            std::cerr << "Start energy out of bounds!\n";
             return;
         }
 
-        while (ln_f > tolerance && counter < mc_sweeps) {
-            size_t random_idx = spin_index_dist(gen);
-            int random_spin = spin_value_dist(gen);
+        std::cout << "Starting Wang-Landau. Range: [" << min_energy << ", " << max_energy << "]\n";
 
-            const double dE = lattice.computeEnergyDifference(random_idx, random_spin);
+        while (ln_f > tolerance) {
+            size_t random_site_idx = spin_index_dist(gen);
+            int current_spin = lattice.getSpin(random_site_idx);
+            int random_spin;
+
+            do {
+                random_spin = spin_value_dist(gen);
+            } while (random_spin == current_spin);
+
+            const double dE = lattice.computeEnergyDifference(random_site_idx, random_spin);
             const double new_energy = current_energy + dE;
+            int new_energy_bin = energy_to_index(new_energy);
 
-            // ACCEPT or REJECT
-            int current_idx;
-            int new_idx;
-
-            try {
-                current_idx = energy_to_index(current_energy);
-                new_idx = energy_to_index(new_energy);
-            } catch (const std::out_of_range& e) {
-                // if the new energy is out of bounds, do nothing
+            if (new_energy_bin < 0 || new_energy_bin >= log_densities.size()) {
+                std::cout << "Energy out of bounds...";
                 continue;
             }
 
             // ln(g_old) - ln(g_new)
-            double const lnP = log_densities[current_idx] - log_densities[new_idx];
+            double const lnP = log_densities[current_energy_bin] - log_densities[new_energy_bin];
 
             // min( 1 , e^(lnP) )
             double const P_acc = std::min(1.0, std::exp(lnP));
 
-            if (P_acc > prob_dist(gen)) {
+            if (lnP >= 0.0 || P_acc > prob_dist(gen)) {
                 // ACCEPT
-                lattice.setSpin(random_idx, random_spin);
+                lattice.setSpin(random_site_idx, random_spin);
                 current_energy=new_energy;
-                current_idx=new_idx;
+                current_energy_bin=new_energy_bin;
             }
 
             // UPDATE DENSITY EN HISTOGRAM
-            histogram[current_idx] += 1;
-            log_densities[current_idx] += ln_f;
+            histogram[current_energy_bin] += 1;
+            log_densities[current_energy_bin] += ln_f;
 
 
             // CHECK FLATNESS
             if (counter % check_interval == 0 && counter > 0 && isHistogramFlat(flatness_criterion)) {
+                std::cout << "Histogram flat. Reducing f. (ln_f = " << ln_f * 0.5 << ")\n";
                 resetHistogram();
                 ln_f *= 0.5;
             }
