@@ -32,7 +32,7 @@ std::vector<size_t> QPottsModel::getCoordinates(const size_t index) const {
     return coords;
 }
 
-void QPottsModel:: setSpin(const int index, const int new_spin) {
+void QPottsModel:: setSpin(const size_t index, const int new_spin) {
     if (new_spin >= Q) { throw std::invalid_argument("Spin cannot be larger than " + std::to_string(Q)); }
     spins[index] = new_spin;
 }

@@ -48,7 +48,7 @@ public:
     [[nodiscard]] int getMinEnergy() const { return static_cast<int>(-J * dim * getTotalSites()); }
     static int getMaxEnergy() { return 0; }
 
-    void setSpin(int index, int new_spin);
+    void setSpin(size_t index, int new_spin);
     void setSpin(const std::vector<size_t>& coordinates, int new_spin);
 
     [[nodiscard]] double computeEnergy() const;
