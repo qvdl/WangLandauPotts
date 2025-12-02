@@ -32,7 +32,7 @@ public:
                                                        spin_index_dist(0, lattice.getTotalSites() - 1),
                                                        spin_value_dist(0, lattice.getQ() - 1) {
         histogram.resize(max_energy - min_energy + 1, 0);
-        log_densities.resize(max_energy - min_energy + 1, 0);
+        log_densities.resize(max_energy - min_energy + 1, 0.0);
     }
 
     // GET FUNCTIONS
@@ -43,27 +43,25 @@ public:
     void resetHistogram() { std::ranges::fill(histogram, 0); }
 
     [[nodiscard]] bool isHistogramFlat(const double criterion) const {
-        int visited_count = 0;
-        int total_hist = 0;
+        int visited_count = 0; // number of bins we have visited
+        int total_hist = 0; // sum of all counts
 
-        for (int E = min_energy; E <= max_energy; E++) {
-            if (histogram[E] > 0) {
+        for (auto& count : histogram) {
+            if (count > 0) {
                 visited_count++;
-                total_hist += histogram[E];
+                total_hist += count;
             }
         }
 
-        // if no energies visited, histogram is not flat
-        if (visited_count == 0) { return false; }
+        // if we have not visited enough energies yet, histogram is not flat
+        if (static_cast<double>(visited_count) / static_cast<double>(histogram.size())) { return false; }
 
         // compute average
-        double avg_hist = static_cast<double>(total_hist) / static_cast<double>(visited_count);
+        const double avg_hist = static_cast<double>(total_hist) / static_cast<double>(visited_count);
 
-        // check if all visited energies meet criterion
-        for (int E=min_energy; E<=max_energy; ++E) {
-            if (histogram[E] > 0) {
-                if (histogram[E] < criterion * avg_hist) { return false; }
-            }
+        // check flatness for visited energies
+        for (int E=0; E<total_hist; ++E) {
+            if (histogram[E] > 0 && histogram[E] < criterion * avg_hist) { return false; }
         }
 
         return true;
@@ -103,9 +101,10 @@ public:
     }
 
     // ALGORITHM IMPLEMENTATION
-    void runSimulation(const size_t mc_sweeps, const double tolerance, double flatness_criterion) {
+    void runSimulation(const size_t mc_sweeps, const double tolerance, const double flatness_criterion) {
         double current_energy = lattice.computeEnergy();
         int counter=0;
+        int check_interval = 10'000;
 
         try {
             if (energy_to_index(current_energy) < 0) {
@@ -154,7 +153,7 @@ public:
 
 
             // CHECK FLATNESS
-            if (counter % 10'000 == 0 && counter > 0 && isHistogramFlat(flatness_criterion)) {
+            if (counter % check_interval == 0 && counter > 0 && isHistogramFlat(flatness_criterion)) {
                 resetHistogram();
                 ln_f *= 0.5;
             }
