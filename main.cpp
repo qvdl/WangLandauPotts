@@ -1,16 +1,18 @@
 #include <iostream>
 #include "qpottsmodel.h"
 #include "wanglandausimulator.h"
+#include "ThermoState.h"
 
 
 int main() {
-    auto potts = QPottsModel(2, 3, 3, 1.0);
-    auto wl_simulator = WangLandauSimulator<QPottsModel>(potts);
-    wl_simulator.runSimulation(1'000'000, 1e-8, 0.8);
-    std::cout << "Histogram is flat? --- " << wl_simulator.isHistogramFlat(0.8);
+    auto model = QPottsModel(2, 5, 3, 1.0);
+    auto wl_simulator = WangLandauSimulator(model);
+    wl_simulator.runSimulation(1e-8, 0.8);
+    const auto log_d = wl_simulator.getLogDensities();
 
-    const std::string hist_filename = "/home/quinten/PycharmProjects/Computational_Physics/SI2530PROJECT/histogram.csv";
     const std::string density_filename = "/home/quinten/PycharmProjects/Computational_Physics/SI2530PROJECT/densities.csv";
-    wl_simulator.plotHistogram(hist_filename);
-    wl_simulator.plotDensities(density_filename);
+    wl_simulator.plotLogDensities(density_filename);
+
+    constexpr double temp=2.71;
+    ThermoState thermo(wl_simulator.getMinEnergy(), log_d, temp, 1);
 }
