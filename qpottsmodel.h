@@ -28,6 +28,8 @@ public:
     QPottsModel(const size_t dimension, const size_t size, const size_t q, const int j) : dim(dimension), L(size), Q(q), J(j) {
         if (dimension == 0) { throw std::invalid_argument("Dimension should be at least 1!"); }
         if (size == 0) { throw std::invalid_argument("Size should be at least 1!"); }
+        if (Q<2) { throw std::invalid_argument("Q should be larger than 2!"); }
+        if (J<=0) { throw std::invalid_argument("J must be > 0!"); }
 
         size_t total = 1;
         for (size_t d=0; d<dim; ++d) {

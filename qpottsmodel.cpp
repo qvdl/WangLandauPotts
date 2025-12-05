@@ -33,6 +33,7 @@ std::vector<size_t> QPottsModel::getCoordinates(const size_t index) const {
 }
 
 void QPottsModel:: setSpin(const size_t index, const int new_spin) {
+    if (index >= total_sites) { throw std::invalid_argument("Index out of range!"); }
     if (new_spin >= Q) { throw std::invalid_argument("Spin cannot be larger than " + std::to_string(Q)); }
     spins[index] = new_spin;
 }
