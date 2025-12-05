@@ -8,4 +8,5 @@ add_executable(SI2530PROJECT main.cpp
         qpottsmodel.h
         wanglandausimulator.h
         rng.h
+        wanglandausimulator.cpp
 )
