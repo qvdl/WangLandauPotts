@@ -28,6 +28,7 @@ public:
     // GET FUNCTIONS
     std::vector<size_t> getHistogram() { return histogram; }
     std::vector<double> getLogDensities() { return log_densities; }
+    [[nodiscard]] int getMinEnergy() const { return min_energy; }
 
     // HELP FUNCTIONS
     void resetHistogram();
