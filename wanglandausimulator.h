@@ -10,6 +10,7 @@
 #include <random>
 #include <numeric>
 #include <fstream>
+#include <iostream>
 
 
 template<typename ModelType>
