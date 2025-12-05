@@ -17,13 +17,13 @@ namespace RNG {
     }
 
     // Uniform integer in [min, max]
-    inline std::size_t uniformIndex(std::size_t min, std::size_t max) {
+    inline std::size_t uniformIndex(const std::size_t min, const std::size_t max) {
         std::uniform_int_distribution<std::size_t> dist(min, max);
         return dist(engine());
     }
 
     // Uniform integer in [0, q-1]
-    inline int uniformSpin(int q) {
+    inline int uniformSpin(const int q) {
         std::uniform_int_distribution<int> dist(0, q - 1);
         return dist(engine());
     }
