@@ -33,6 +33,12 @@ namespace RNG {
         static std::uniform_real_distribution<double> dist(0.0, 1.0);
         return dist(engine());
     }
+
+    inline int uniformSpin(const std::size_t q) {
+        if (q < 2 || q > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+            throw std::invalid_argument("q out of range for uniformSpin");
+        return uniformSpin(static_cast<int>(q));
+    }
 }
 
 
