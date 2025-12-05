@@ -70,25 +70,17 @@ void WangLandauSimulator::plotLogDensities(const std::string& filename) const {
 }
 
 int WangLandauSimulator::energy_to_index(const double energy) const {
-    const int idx = static_cast<int>(std::round(energy) - min_energy);
-
-    if (idx < 0 || idx >= static_cast<int>(histogram.size())) {
-        throw std::out_of_range("Energy index out of bounds!");
+    if (energy < min_energy || energy > max_energy) {
+        throw std::invalid_argument("Energy is out of bound!");
     }
-
-    return idx;
+    return static_cast<int>(std::round(energy) - min_energy);
 }
 
 // ALGORITHM IMPLEMENTATION
 void WangLandauSimulator::runSimulation(const double tolerance, const double flatness_criterion) {
     double current_energy = lattice.computeEnergy();
     int counter = 0;
-
     int current_energy_bin = energy_to_index(current_energy);
-    if (current_energy_bin < 0 || current_energy_bin >= static_cast<int>(log_densities.size())) {
-        std::cerr << "Start energy out of bounds!\n";
-        return;
-    }
 
     std::cout << "Starting Wang-Landau. Range: [" << min_energy << ", " << max_energy << "]\n";
 
@@ -104,11 +96,6 @@ void WangLandauSimulator::runSimulation(const double tolerance, const double fla
         const double dE = lattice.computeEnergyDifference(random_site_idx, random_spin);
         const double new_energy = current_energy + dE;
         const int new_energy_bin = energy_to_index(new_energy);
-
-        if (new_energy_bin < 0 || new_energy_bin >= static_cast<int>(log_densities.size())) {
-            std::cout << "Energy out of bounds...";
-            continue;
-        }
 
         // ln(g_old) - ln(g_new)
         double const lnP = log_densities[current_energy_bin] - log_densities[new_energy_bin];
