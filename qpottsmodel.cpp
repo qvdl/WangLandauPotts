@@ -3,7 +3,27 @@
 //
 
 #include "qpottsmodel.h"
+#include "rng.h"
 
+
+// CONSTRUCTOR
+QPottsModel::QPottsModel(const size_t dimension, const size_t size, const size_t q, const int j) : dim(dimension), L(size), Q(q), J(j) {
+    if (dimension == 0) { throw std::invalid_argument("Dimension should be at least 1!"); }
+    if (size == 0) { throw std::invalid_argument("Size should be at least 1!"); }
+    if (Q<2) { throw std::invalid_argument("Q should be larger than 2!"); }
+    if (J<=0) { throw std::invalid_argument("J must be > 0!"); }
+
+    size_t total = 1;
+    for (size_t d=0; d<dim; ++d) {
+        total *= L;
+    }
+    total_sites=total;
+
+    spins.reserve(total_sites);
+    for (int i=0; i<total_sites; ++i) {
+        spins.emplace_back(RNG::uniformSpin(Q));
+    }
+}
 
 size_t QPottsModel::getIndex(const std::vector<size_t>& coordinates) const {
     if (coordinates.size() != dim) { throw std::invalid_argument("Coordinates should have dimension " + std::to_string(dim)); }
