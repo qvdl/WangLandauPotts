@@ -70,7 +70,7 @@ void WangLandauSimulator::plotLogDensities(const std::string& filename) const {
 }
 
 int WangLandauSimulator::energy_to_index(const double energy) const {
-    if (energy < min_energy || energy > max_energy) {
+    if (energy < min_energy-1e-12|| energy > max_energy+1e-12) {
         throw std::invalid_argument("Energy is out of bound!");
     }
     return static_cast<int>(std::round(energy) - min_energy);
