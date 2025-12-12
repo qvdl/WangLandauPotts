@@ -25,7 +25,7 @@ private:
 
 public:
     QPottsModel(const size_t dimension, const size_t size) : QPottsModel(dimension, size, 2, 1.0) {}
-    QPottsModel(size_t dimension, size_t size, size_t q, int j);
+    QPottsModel(size_t dimension, size_t size, size_t q, double j);
 
     [[nodiscard]] size_t getDim() const { return dim; }
     [[nodiscard]] size_t getSize() const { return L; }
