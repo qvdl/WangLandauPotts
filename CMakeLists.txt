@@ -11,4 +11,6 @@ add_executable(SI2530PROJECT main.cpp
         wanglandausimulator.cpp
         ThermoState.cpp
         ThermoState.h
+        functions.cpp
+        functions.h
 )
