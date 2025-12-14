@@ -82,7 +82,7 @@ void WangLandauSimulator::runSimulation(const double tolerance, const double fla
     int counter = 0;
     int current_energy_bin = energy_to_index(current_energy);
 
-    std::cout << "Starting Wang-Landau. Range: [" << min_energy << ", " << max_energy << "]\n";
+    // std::cout << "Starting Wang-Landau. Range: [" << min_energy << ", " << max_energy << "]\n";
 
     while (ln_f > tolerance) {
         const size_t random_site_idx = RNG::uniformIndex(0, lattice.getTotalSites() - 1);
@@ -116,7 +116,7 @@ void WangLandauSimulator::runSimulation(const double tolerance, const double fla
 
         // CHECK FLATNESS
         if (counter % check_interval == 0 && counter > 0 && isHistogramFlat(flatness_criterion)) {
-            std::cout << "Histogram flat. Reducing f. (ln_f = " << ln_f * 0.5 << ")\n";
+            // std::cout << "Histogram flat. Reducing f. (ln_f = " << ln_f * 0.5 << ")\n";
             resetHistogram();
             ln_f *= 0.5;
         }
