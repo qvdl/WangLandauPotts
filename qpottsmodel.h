@@ -6,9 +6,7 @@
 #define SI2530PROJECT_LATTICE_H
 
 #include <vector>
-#include <cmath>
 #include <stdexcept>
-#include <string>
 
 
 class QPottsModel {

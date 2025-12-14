@@ -5,7 +5,6 @@
 #include "qpottsmodel.h"
 #include "rng.h"
 
-
 // CONSTRUCTOR
 QPottsModel::QPottsModel(const size_t dimension, const size_t size, const size_t q, const double j) : dim(dimension), L(size), Q(q), J(j) {
     if (dimension == 0) { throw std::invalid_argument("Dimension should be at least 1!"); }
