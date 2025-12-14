@@ -47,8 +47,17 @@ std::vector<double> computeExactDOS(QPottsModel& lattice) {
     return g;
 }
 
+std::vector<double> compute_lnVec(const std::vector<double>& vec) {
+    std::vector<double> lnVec(vec.size(), 0.0);
 
-double compute_MSE(const std::vector<double> &v1, const std::vector<double> &v2) {
+    for (size_t i=0; i<vec.size(); ++i) {
+        if (vec[i]>0) { lnVec[i] = std::log(vec[i]); }
+    }
+
+    return lnVec;
+}
+
+double computeMSE(const std::vector<double> &v1, const std::vector<double> &v2) {
     double mse = 0.0;
     int nonempty_bins = 0;
     for (int E=0; E<v1.size(); ++E) {
