@@ -124,3 +124,17 @@ void WangLandauSimulator::runSimulation(const double tolerance, const double fla
         ++counter;
     }
 }
+
+
+std::vector<double> WangLandauSimulator::compute_ln_gAbs() const {
+    const double ln_g_E0 = log_densities[0];
+    const double ln_Q = std::log(lattice.getQ());
+
+    std::vector<double> ln_g_abs(log_densities.size(), 0.0);
+
+    for (std::size_t i=0; i<log_densities.size(); ++i) {
+        if (log_densities[i] > 0) { ln_g_abs[i] = log_densities[i] - ln_g_E0 + ln_Q; }
+    }
+
+    return ln_g_abs;
+}

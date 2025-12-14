@@ -36,6 +36,7 @@ public:
     void plotHistogram(const std::string& filename) const;
     void plotLogDensities(const std::string& filename) const;
     [[nodiscard]] int energy_to_index(double energy) const;
+    [[nodiscard]] std::vector<double> compute_ln_gAbs() const;
 
     // ALGORITHM IMPLEMENTATION
     void runSimulation(double tolerance=1e-8, double flatness_criterion=0.8);
