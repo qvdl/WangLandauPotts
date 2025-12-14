@@ -38,7 +38,7 @@ public:
     [[nodiscard]] int energy_to_index(double energy) const;
 
     // ALGORITHM IMPLEMENTATION
-    void runSimulation(double tolerance, double flatness_criterion);
+    void runSimulation(double tolerance=1e-8, double flatness_criterion=0.8);
 };
 
 #endif // SI2530PROJECT_WANGLANDAUSIMULATOR_H
