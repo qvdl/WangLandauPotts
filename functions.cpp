@@ -8,6 +8,7 @@
 #include <iostream>
 #include <chrono>
 #include <fstream>
+#include "wanglandausimulator.h"
 
 std::vector<double> computeExactDOS(const int dim, const size_t L, const size_t Q, const double J) {
     QPottsModel lattice(dim, L, Q, J);
@@ -131,4 +132,87 @@ void writeWLOutputCSV(const std::string &filename, const std::vector<int> &energ
     }
 
     file.close();
+}
+
+
+void runWLandPrint(QPottsModel &model, int Q, int L, int dimension, int N) {
+    {
+        std::vector<std::vector<double>> all_g;
+        all_g.reserve(N);
+
+        // ---- run N independent WL simulations ----
+        for (int k = 0; k < N; ++k) {
+            WangLandauSimulator wl(model);
+
+            const auto t0 = std::chrono::high_resolution_clock::now();
+            wl.runSimulation_parallel();
+            const auto duration =
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::high_resolution_clock::now() - t0
+                ).count();
+
+            std::cout << "Running WL in parallel with (Q, L, d) = ("
+                      << Q << ", " << L << ", " << dimension
+                      << ") took " << duration / 1000.0 << " seconds\n";
+
+            all_g.emplace_back(wl.compute_lngAbs());
+        }
+
+        // ---- energy range ----
+        const int min_energy = model.getMinEnergy();
+        const int max_energy = QPottsModel::getMaxEnergy();
+        const std::size_t nBins = max_energy - min_energy + 1;
+
+        // ---- NumPy name suffix ----
+        const std::string suffix =
+            std::to_string(Q) +
+            std::to_string(L) +
+            std::to_string(dimension);
+
+        // ---- print as 2D NumPy array ----
+        std::cout << "lng_wl" << suffix << " = np.array([\n";
+        for (std::size_t r = 0; r < all_g.size(); ++r) {
+            std::cout << "  [";
+            for (std::size_t i = 0; i < nBins; ++i) {
+                std::cout << all_g[r][i];
+                if (i + 1 < nBins) std::cout << ", ";
+            }
+            std::cout << "]";
+            if (r + 1 < all_g.size()) std::cout << ",";
+            std::cout << "\n";
+        }
+        std::cout << "])\n";
+    }
+}
+
+void runWLonceWriteCSV(QPottsModel &model, int Q, int L, int dimension, const std::string &output_file) {
+    {
+        // Construct the WL-simulator
+        WangLandauSimulator wl(model);
+
+        // Run the WL algorithm
+        const auto t0 = std::chrono::high_resolution_clock::now();
+        wl.runSimulation_parallel();
+        const auto duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::high_resolution_clock::now() - t0
+            ).count();
+
+        std::cout << "Running WL in parallel with (Q, L, d) = ("
+                  << Q << ", " << L << ", " << dimension << ") took "
+                  << duration / 1000.0 << " seconds\n\n";
+
+        // Get ln(g_abs) from the WL output
+        const auto ln_gAbs_wl = wl.compute_lngAbs();
+
+        // Energies vector (inclusive range is usually what you want)
+        std::vector<int> energies;
+        energies.reserve(static_cast<std::size_t>(QPottsModel::getMaxEnergy() - wl.getMinEnergy() + 1));
+
+        for (int e = wl.getMinEnergy(); e <= QPottsModel::getMaxEnergy(); ++e) {
+            energies.emplace_back(e);
+        }
+
+        writeWLOutputCSV(output_file, energies, ln_gAbs_wl);
+    }
 }
