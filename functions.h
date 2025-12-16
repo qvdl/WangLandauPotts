@@ -13,5 +13,9 @@ std::vector<double> computeExactDOS(QPottsModel& lattice);
 std::vector<double> compute_lnVec(const std::vector<double>& vec);
 
 double computeMSE(const std::vector<double> &v1, const std::vector<double> &v2);
+double computeTc(double J, int Q);
+
+void print_npArrays(const QPottsModel& model, const std::vector<double>& g_exact, const std::vector<double>& ln_gAbs_wl);
+void writeWLOutputCSV(const std::string& filename, const std::vector<int>& energies, const std::vector<double>& log_densities);
 
 #endif //SI2530PROJECT_FUNCTIONS_H

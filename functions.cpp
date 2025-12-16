@@ -5,7 +5,9 @@
 #include <cmath>
 #include "functions.h"
 #include "qpottsmodel.h"
-#include <algorithm>
+#include <iostream>
+#include <chrono>
+#include <fstream>
 
 std::vector<double> computeExactDOS(const int dim, const size_t L, const size_t Q, const double J) {
     QPottsModel lattice(dim, L, Q, J);
@@ -29,6 +31,7 @@ std::vector<double> computeExactDOS(QPottsModel& lattice) {
     // configuration
     std::vector<int> digits(N, 0);
 
+    auto t0 = std::chrono::high_resolution_clock::now();
     for (size_t conf=0; conf<total; ++conf) {
         for (size_t i=0; i<N; ++i) { lattice.setSpin(i, digits[i]); }
 
@@ -43,6 +46,8 @@ std::vector<double> computeExactDOS(QPottsModel& lattice) {
             ++k;
         }
     }
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t0).count();
+    std::cout << "Checking " << std::pow(Q, N) << " configurations took " << duration << " ms\n\n";
 
     return g;
 }
@@ -70,4 +75,60 @@ double computeMSE(const std::vector<double> &v1, const std::vector<double> &v2) 
     }
 
     return mse / static_cast<double>(nonempty_bins);
+}
+
+double computeTc(const double J, const int Q) {
+    return J / std::log( 1 + std::sqrt(Q) );
+}
+
+void print_npArrays(const QPottsModel& model, const std::vector<double>& g_exact, const std::vector<double>& ln_gAbs_wl) {
+    const auto Q = model.getQ();
+    const auto L = model.getSize();
+    const auto dim = model.getDim();
+    // energy range
+    const int min_energy = model.getMinEnergy();
+    constexpr int max_energy = 0;
+    const std::size_t nBins = max_energy - min_energy + 1;
+
+    // name suffix: QLd
+    const std::string suffix =
+        std::to_string(Q) +
+        std::to_string(L) +
+        std::to_string(dim);
+
+    // ---- Energies ----
+    std::cout << "E_" << suffix << " = np.array([";
+    for (std::size_t i = 0; i < nBins; ++i) {
+        std::cout << (min_energy + static_cast<int>(i));
+        if (i + 1 < nBins) std::cout << ", ";
+    }
+    std::cout << "])\n\n";
+
+    // ---- Exact g(E) ----
+    std::cout << "lng_exact" << suffix << " = np.array([";
+    for (std::size_t i = 0; i < nBins; ++i) {
+        std::cout << g_exact[i];
+        if (i + 1 < nBins) std::cout << ", ";
+    }
+    std::cout << "])\n\n";
+
+    // ---- WL g(E) ----
+    std::cout << "lng_wl" << suffix << " = np.array([";
+    for (std::size_t i = 0; i < nBins; ++i) {
+        if (ln_gAbs_wl[i] > 0.0) { std::cout << std::exp(ln_gAbs_wl[i]); }
+        else { std::cout << "0"; }
+        if (i + 1 < nBins) std::cout << ", ";
+    }
+    std::cout << "])\n";
+}
+
+void writeWLOutputCSV(const std::string &filename, const std::vector<int> &energies, const std::vector<double> &log_densities) {
+    std::ofstream file(filename);
+    file << "E,ln_g\n";  // header for Python
+
+    for (size_t i = 0; i < energies.size(); ++i) {
+        file << energies[i] << "," << log_densities[i] << "\n";
+    }
+
+    file.close();
 }
