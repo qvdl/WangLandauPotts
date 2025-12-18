@@ -132,6 +132,7 @@ void writeWLOutputCSV(const std::string &filename, const std::vector<int> &energ
     }
 
     file.close();
+    std::cout << "Succesfully wrote data to file " << filename << "\n";
 }
 
 
@@ -185,7 +186,7 @@ void runWLandPrint(QPottsModel &model, int Q, int L, int dimension, int N) {
     }
 }
 
-void runWLonceWriteCSV(QPottsModel &model, int Q, int L, int dimension, const std::string &output_file) {
+void runWLonceWriteCSV(QPottsModel &model, const int Q, const int L, const int dimension, const std::string &output_file) {
     {
         // Construct the WL-simulator
         WangLandauSimulator wl(model);
@@ -205,7 +206,7 @@ void runWLonceWriteCSV(QPottsModel &model, int Q, int L, int dimension, const st
         // Get ln(g_abs) from the WL output
         const auto ln_gAbs_wl = wl.compute_lngAbs();
 
-        // Energies vector (inclusive range is usually what you want)
+        // Energies vector
         std::vector<int> energies;
         energies.reserve(static_cast<std::size_t>(QPottsModel::getMaxEnergy() - wl.getMinEnergy() + 1));
 
