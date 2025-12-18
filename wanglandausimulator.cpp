@@ -1,11 +1,9 @@
 #include "wanglandausimulator.h"
-
 #include <stdexcept>
 #include <cmath>
 #include <algorithm>
 #include <iostream>
-#include <numeric>
-#include <omp.h>
+#include <fstream>
 
 
 WangLandauSimulator::WangLandauSimulator(QPottsModel &lattice)
@@ -21,8 +19,7 @@ WangLandauSimulator::WangLandauSimulator(QPottsModel &lattice)
 }
 
 
-
-// HELP FUNCTIONS
+// ---- HELPER FUNCTIONS ----
 void WangLandauSimulator::resetHistogram() { std::ranges::fill(histogram, 0); }
 
 bool WangLandauSimulator::isHistogramFlat(const double criterion) const {
@@ -77,7 +74,7 @@ int WangLandauSimulator::energy_to_index(const double energy) const {
     return static_cast<int>(std::round(energy) - min_energy);
 }
 
-// ALGORITHM IMPLEMENTATION
+// ---- ALGORITHM IMPLEMENTATION ----
 void WangLandauSimulator::runSimulation(const double tolerance, const double flatness_criterion) {
     double current_energy = lattice.computeEnergy();
     int counter = 0;
@@ -127,12 +124,14 @@ void WangLandauSimulator::runSimulation(const double tolerance, const double fla
 }
 
 
-void WangLandauSimulator::runSimulation_parallel(double tolerance, double flatness_criterion)
+// ---- PARALLEL IMPLEMENTATION ----
+void WangLandauSimulator::runSimulation_parallel(const double tolerance, const double flatness_criterion)
 {
 #pragma omp parallel
 {
-    // Thread-local persistent walker
-    QPottsModel local_lattice = lattice;             // copy once
+    // Thread-local lattice configuration (persistent walker)
+    // Each thread performs its own random walk in configuration space
+    QPottsModel local_lattice = lattice;
     double current_energy = local_lattice.computeEnergy();
     int current_energy_bin = energy_to_index(current_energy);
 
@@ -141,52 +140,62 @@ void WangLandauSimulator::runSimulation_parallel(double tolerance, double flatne
 
     bool done = false;
     while (!done) {
-        // --- chunk of MC attempts per thread ---
+
+        // Perform a block of single-spin updates before synchronization
         for (int step = 0; step < check_interval; ++step) {
 
+            // Propose a random single-spin update
             const std::size_t i = RNG::uniformIndex(0, n_sites - 1);
             const int s_old = local_lattice.getSpin(i);
-            int s_new; do { s_new = RNG::uniformSpin(q); } while (s_new == s_old);
+            int s_new;
+            do { s_new = RNG::uniformSpin(q); } while (s_new == s_old);
 
+            // Compute local energy difference
             const double dE = local_lattice.computeEnergyDifference(i, s_new);
             const double newE = current_energy + dE;
             const int newBin = energy_to_index(newE);
 
-            // hard reject if out of range
-            if (newBin >= 0 && newBin < (int)log_densities.size()) {
-                const double lnP = log_densities[current_energy_bin] - log_densities[newBin];
+            // Reject moves outside the allowed energy range
+            if (newBin >= 0 && newBin < static_cast<int>(log_densities.size())) {
+
+                // Wang–Landau acceptance probability
+                const double lnP =
+                    log_densities[current_energy_bin] - log_densities[newBin];
+
                 if (lnP >= 0.0 || std::exp(lnP) > RNG::uniformProb()) {
                     local_lattice.setSpin(i, s_new);
                     current_energy = newE;
                     current_energy_bin = newBin;
                 }
             }
-            // WL updates at the visited (current) bin
+
+            // Update DOS estimate and histogram at the visited energy
 #pragma omp atomic update
             histogram[current_energy_bin] += 1;
 #pragma omp atomic update
             log_densities[current_energy_bin] += ln_f;
         }
-
-        // --- sync + flatness/√f ---
+        // Synchronize all walkers before checking histogram flatness
 #pragma omp barrier
 #pragma omp single
         {
+            // Reduce modification factor if histogram is sufficiently flat
             if (isHistogramFlat(flatness_criterion)) {
-                ln_f *= 0.5;         // f -> sqrt(f)
+                ln_f *= 0.5;   // f -> sqrt(f)
                 resetHistogram();
             }
+
+            // Convergence criterion: modification factor sufficiently small
             if (ln_f <= tolerance) {
-                // tell everyone to exit
-                // (captured by all threads after the barrier)
+                // termination flag checked by all threads
             }
         }
 #pragma omp barrier
-        if (ln_f <= tolerance) done = true;
-    } // while
-} // parallel
+        if (ln_f <= tolerance)
+            done = true;
+    }
+} // end parallel region
 }
-
 
 std::vector<double> WangLandauSimulator::compute_lngAbs() const {
     const double ln_g_E0 = log_densities[0];

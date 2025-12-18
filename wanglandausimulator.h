@@ -5,10 +5,7 @@
 #ifndef SI2530PROJECT_WANGLANDAUSIMULATOR_H
 #define SI2530PROJECT_WANGLANDAUSIMULATOR_H
 
-
-#include <fstream>
 #include <vector>
-
 #include "qpottsmodel.h"
 #include "rng.h"
 
