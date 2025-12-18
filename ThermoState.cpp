@@ -3,7 +3,7 @@
 //
 
 #include "ThermoState.h"
-
+#include <iostream>
 
 ThermoState::ThermoState(const int min_energy,
                 const std::vector<double>& log_g, // ln g(E) for E = Emin + i

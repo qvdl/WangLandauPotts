@@ -25,16 +25,18 @@ private:
 public:
     ThermoState(int min_energy, const std::vector<double>& log_g, double T, double kB = 1.0);
 
-    [[nodiscard]] double T()  const { return T_; }
-    [[nodiscard]] int    Emin() const { return Emin_; }
+    [[nodiscard]] double getT()  const { return T_; }
+    [[nodiscard]] int    getEmin() const { return Emin_; }
 
-    [[nodiscard]] double E()  const { return E_; }
-    [[nodiscard]] double Cv() const { return Cv_; }
-    [[nodiscard]] double F()  const { return F_; }
-    [[nodiscard]] double S()  const { return S_; }
-    [[nodiscard]] double Z()  const { return Z_; }
+    [[nodiscard]] double getE()  const { return E_; }
+    [[nodiscard]] double getCv() const { return Cv_; }
+    [[nodiscard]] double getF()  const { return F_; }
+    [[nodiscard]] double getS()  const { return S_; }
+    [[nodiscard]] double getZ()  const { return Z_; }
 
-    [[nodiscard]] const std::vector<double>& P() const { return P_; } // P(E|T) over E = Emin + i
+    [[nodiscard]] const std::vector<double>& getP() const { return P_; } // P(E|T) over E = Emin + i
+
+    // const void printQuantities();
 };
 
 #endif // SI2530PROJECT_THERMOSTATE_H
