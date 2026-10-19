@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 4.0)
-project(SI2530PROJECT)
+project(WangLandauPotts)
 
 set(CMAKE_CXX_STANDARD 20)
 
 find_package(OpenMP REQUIRED)
 
-add_executable(SI2530PROJECT main.cpp
+add_executable(WangLandauPotts main.cpp
         qpottsmodel.cpp
         qpottsmodel.h
         wanglandausimulator.h
@@ -17,4 +17,4 @@ add_executable(SI2530PROJECT main.cpp
         functions.h
 )
 
-target_link_libraries(SI2530PROJECT PRIVATE OpenMP::OpenMP_CXX)
+target_link_libraries(WangLandauPotts PRIVATE OpenMP::OpenMP_CXX)
