@@ -10,7 +10,7 @@ int main() {
     wl_simulator.runSimulation(1e-8, 0.8);
     const auto log_d = wl_simulator.getLogDensities();
 
-    const std::string density_filename = "/home/quinten/PycharmProjects/Computational_Physics/SI2530PROJECT/densities.csv";
+    const std::string density_filename = "densities.csv";
     wl_simulator.plotLogDensities(density_filename);
 
     constexpr double temp=2.71;
