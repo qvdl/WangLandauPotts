@@ -32,4 +32,4 @@ From the project directory:
 ```bash
 cmake -S . -B build
 cmake --build build
-./build/SI2530PROJECT
+./build/WangLandauPotts
